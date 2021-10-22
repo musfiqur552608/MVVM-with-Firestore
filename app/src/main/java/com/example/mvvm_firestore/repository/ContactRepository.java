@@ -6,15 +6,21 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.MutableLiveData;
 
 import com.example.mvvm_firestore.model.ContactUser;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ContactRepository {
@@ -63,5 +69,37 @@ public class ContactRepository {
         });
 
         return insertResultLiveData;
+    }
+
+    public MutableLiveData<List<ContactUser>> getDataFromFireStore(){
+        MutableLiveData<List<ContactUser>> getFireStoreMutableLiveData = new MutableLiveData<>();
+        String currentUser = firebaseAuth.getCurrentUser().getUid();
+        List<ContactUser>contactList = new ArrayList<>();
+
+        firebaseFirestore.collection("ContactList").document(currentUser).collection("User")
+                .get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                contactList.clear();
+                for(DocumentSnapshot documentSnapshot:task.getResult()){
+                    String id = documentSnapshot.getString("contact_id");
+                    String name = documentSnapshot.getString("contact_Name");
+                    String image = documentSnapshot.getString("contact_Image");
+                    String phone = documentSnapshot.getString("contact_Phone");
+                    String email = documentSnapshot.getString("contact_Email");
+
+                    ContactUser user = new ContactUser(id,name,image,phone,email);
+                    contactList.add(user);
+                }
+                getFireStoreMutableLiveData.setValue(contactList);
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+
+            }
+        });
+
+        return getFireStoreMutableLiveData;
     }
 }
