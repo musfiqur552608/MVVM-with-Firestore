@@ -1,6 +1,7 @@
 package com.example.mvvm_firestore.view;
 
 import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -92,6 +93,22 @@ public class ListFragment extends Fragment implements ContactAdapter.ClickInterf
 
     @Override
     public void onLongItemClick(int position) {
-        Toast.makeText(getActivity(), ""+position+"Long", Toast.LENGTH_SHORT).show();
+        String id = userList.get(position).getContactId();
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        String[] option = {"Update", "Delete"};
+        builder.setItems(option, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                if(i == 0){
+
+                }
+                if(i == 1){
+                    contactViewModel.delete(id);
+                    Toast.makeText(getActivity(), "Delete Successfully...!!!", Toast.LENGTH_SHORT).show();
+                    userList.remove(position);
+                    adapter.notifyItemRemoved(position);
+                }
+            }
+        }).create().show();
     }
 }

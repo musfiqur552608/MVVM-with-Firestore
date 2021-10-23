@@ -102,4 +102,21 @@ public class ContactRepository {
 
         return getFireStoreMutableLiveData;
     }
+
+    public void deleteDataFirebase(String id){
+        String currentUser = firebaseAuth.getCurrentUser().getUid();
+        StorageReference deleteImage = storageReference.child("profile_image").child(currentUser).child(id+"jpg");
+        deleteImage.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void unused) {
+                firebaseFirestore.collection("ContactList").document(currentUser)
+                .collection("User").document(id).delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void unused) {
+
+                    }
+                });
+            }
+        });
+    }
 }
