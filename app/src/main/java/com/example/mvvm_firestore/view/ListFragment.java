@@ -19,6 +19,7 @@ import android.widget.Toast;
 
 import com.example.mvvm_firestore.R;
 import com.example.mvvm_firestore.adapter.ContactAdapter;
+import com.example.mvvm_firestore.dialog.DetailsDialog;
 import com.example.mvvm_firestore.model.ContactUser;
 import com.example.mvvm_firestore.viewmodel.ContactViewModel;
 
@@ -28,7 +29,7 @@ import java.util.List;
 import dmax.dialog.SpotsDialog;
 
 
-public class ListFragment extends Fragment {
+public class ListFragment extends Fragment implements ContactAdapter.ClickInterface{
     private ContactViewModel contactViewModel;
     private SearchView searchView;
     private RecyclerView recyclerView;
@@ -54,7 +55,7 @@ public class ListFragment extends Fragment {
         setUpRecycle();
         searchView = view.findViewById(R.id.schViewId);
         recyclerView = view.findViewById(R.id.recylerViewId);
-        adapter = new ContactAdapter();
+        adapter = new ContactAdapter(this);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
     }
@@ -76,5 +77,21 @@ public class ListFragment extends Fragment {
 
     private void initViewModel() {
         contactViewModel = new ViewModelProvider(this,ViewModelProvider.AndroidViewModelFactory.getInstance(getActivity().getApplication())).get(ContactViewModel.class);
+    }
+
+    @Override
+    public void onItemClick(int position) {
+        openDetailsDialog(position);
+    }
+
+    private void openDetailsDialog(int position) {
+        DetailsDialog dialog = new DetailsDialog(userList,position);
+        dialog.show(getChildFragmentManager(),"Details Dialog");
+
+    }
+
+    @Override
+    public void onLongItemClick(int position) {
+        Toast.makeText(getActivity(), ""+position+"Long", Toast.LENGTH_SHORT).show();
     }
 }
