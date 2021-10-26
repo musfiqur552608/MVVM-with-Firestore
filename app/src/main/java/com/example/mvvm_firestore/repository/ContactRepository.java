@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.MutableLiveData;
 
 import com.example.mvvm_firestore.model.ContactUser;
+import com.example.mvvm_firestore.model.UpdateUser;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -45,6 +46,7 @@ public class ContactRepository {
                         contactMap.put("contact_Image", uri.toString());
                         contactMap.put("contact_Phone",user.getContactPhone());
                         contactMap.put("contact_Email",user.getContactEmail());
+                        contactMap.put("contact_Search",user.getContactId());
 
                         firebaseFirestore.collection("ContactList").document(currentUser).collection("User")
                         .document(user.getContactId()).set(contactMap).addOnSuccessListener(new OnSuccessListener<Void>() {
@@ -118,5 +120,81 @@ public class ContactRepository {
                 });
             }
         });
+    }
+
+    public void updateImageFirebase(String id, Uri uri){
+        String currentUser = firebaseAuth.getCurrentUser().getUid();
+        StorageReference image_path = storageReference.child("profile_image").child(currentUser).child(id+"jpg");
+        image_path.putFile(uri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                image_path.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                    @Override
+                    public void onSuccess(Uri uri) {
+                        firebaseFirestore.collection("ContactList").document(currentUser)
+                                .collection("User").document(id).update("contact_image",uri.toString())
+                                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                    @Override
+                                    public void onSuccess(Void unused) {
+
+                                    }
+                                });
+                    }
+                });
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+
+            }
+        });
+    }
+
+    public void updateInfoFirebase(UpdateUser updateUser){
+        String currentUser = firebaseAuth.getCurrentUser().getUid();
+        firebaseFirestore.collection("ContactList").document(currentUser).collection("User")
+                .document(updateUser.getContactId()).update("contact_Name",updateUser.getContactName(),"contact_Phone",updateUser.getContactPhone(),
+                "contact_Email",updateUser.getContactEmail()).addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void unused) {
+
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+
+            }
+        });
+    }
+
+    public MutableLiveData<List<ContactUser>> searchDataFirebase(String s){
+        MutableLiveData<List<ContactUser>> getSearchMutableLiveData = new MutableLiveData<>();
+
+        String currentUser = firebaseAuth.getCurrentUser().getUid();
+        List<ContactUser> searchList = new ArrayList<>();
+        firebaseFirestore.collection("ContactList").document(currentUser).collection("User")
+                .whereEqualTo("contact_Search",s).get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                for(DocumentSnapshot documentSnapshot:task.getResult()) {
+                    String id = documentSnapshot.getString("contact_Id");
+                    String name = documentSnapshot.getString("contact_Name");
+                    String image = documentSnapshot.getString("contact_Image");
+                    String phone = documentSnapshot.getString("contact_Phone");
+                    String email = documentSnapshot.getString("contact_Email");
+
+                    ContactUser user = new ContactUser(id, name, image, phone, email);
+                    searchList.add(user);
+                }
+                getSearchMutableLiveData.setValue(searchList);
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+
+            }
+        });
+
+        return  getSearchMutableLiveData;
     }
 }
